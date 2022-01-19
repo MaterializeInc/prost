@@ -224,7 +224,7 @@ pub struct Config {
     protoc_args: Vec<OsString>,
     disable_comments: PathMap<()>,
 
-    // lalala
+    // Needed for tokio console
     file_descriptor_set_path: Option<PathBuf>,
     include_file: Option<PathBuf>,
 }
@@ -235,6 +235,7 @@ impl Config {
         Config::default()
     }
 
+    /// Needed for tokio console
     pub fn file_descriptor_set_path<P>(&mut self, path: P) -> &mut Self
     where
         P: Into<PathBuf>,
@@ -243,6 +244,7 @@ impl Config {
         self
     }
 
+    /// Needed for tokio console
     pub fn include_file<P>(&mut self, path: P) -> &mut Self
     where
         P: Into<PathBuf>,
