@@ -223,12 +223,32 @@ pub struct Config {
     default_package_filename: String,
     protoc_args: Vec<OsString>,
     disable_comments: PathMap<()>,
+
+    // lalala
+    file_descriptor_set_path: Option<PathBuf>,
+    include_file: Option<PathBuf>,
 }
 
 impl Config {
     /// Creates a new code generator configuration with default options.
     pub fn new() -> Config {
         Config::default()
+    }
+
+    pub fn file_descriptor_set_path<P>(&mut self, path: P) -> &mut Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.file_descriptor_set_path = Some(path.into());
+        self
+    }
+
+    pub fn include_file<P>(&mut self, path: P) -> &mut Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.include_file = Some(path.into());
+        self
     }
 
     /// Configure the code generator to generate Rust [`BTreeMap`][1] fields for Protobuf
@@ -688,7 +708,11 @@ impl Config {
         // this figured out.
         // [1]: http://doc.crates.io/build-script.html#outputs-of-the-build-script
 
-        let file_descriptor_set_path = target.join("file_descriptor_set.pb");
+        let file_descriptor_set_path = self
+            .file_descriptor_set_path
+            .as_ref()
+            .cloned()
+            .unwrap_or(target.join("file_descriptor_set.pb"));
 
         let mut cmd = Command::new(protoc());
         cmd.arg("--include_imports")
@@ -758,7 +782,11 @@ impl Config {
             }
         }
 
-        let include_file = target.join("mod.rs");
+        let include_file = self
+            .include_file
+            .as_ref()
+            .cloned()
+            .unwrap_or(target.join("mod.rs"));
         trace!("Writing include file: {:?}", include_file);
         let mut file = fs::File::create(include_file)?;
         self.write_includes(
@@ -891,6 +919,9 @@ impl default::Default for Config {
             default_package_filename: "_".to_string(),
             protoc_args: Vec::new(),
             disable_comments: PathMap::default(),
+
+            file_descriptor_set_path: None,
+            include_file: None,
         }
     }
 }
