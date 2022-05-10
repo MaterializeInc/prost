@@ -21,11 +21,6 @@ use std::env;
 use std::path::PathBuf;
 use which::which;
 
-/// Returns the path to the location of the bundled Protobuf artifacts.
-fn bundle_path() -> PathBuf {
-    env::current_dir().unwrap().join("third-party")
-}
-
 /// Returns the path to the Protobuf include directory pointed to by the `PROTOC_INCLUDE`
 /// environment variable, if it is set.
 fn env_protoc_include() -> Option<PathBuf> {
@@ -52,7 +47,7 @@ fn env_protoc_include() -> Option<PathBuf> {
 
 /// Returns the path to the bundled Protobuf include directory.
 fn bundled_protoc_include() -> PathBuf {
-    bundle_path().join("include")
+    protobuf_src::include()
 }
 
 /// Check for `protoc` via the `PROTOC` env var or in the `PATH`.
@@ -73,15 +68,9 @@ fn vendored() -> bool {
     }
 }
 
-/// Compile `protoc` via `cmake`.
+/// Compile `protoc`.
 fn compile() -> Option<PathBuf> {
-    let protobuf_src = bundle_path().join("protobuf").join("cmake");
-
-    println!("cargo:rerun-if-changed={}", protobuf_src.display());
-
-    let dst = cmake::Config::new(protobuf_src).build();
-
-    Some(dst.join("bin").join("protoc"))
+    Some(protobuf_src::protoc())
 }
 
 /// Try to find a `protoc` through a few methods.
