@@ -18,7 +18,7 @@ use crate::ast::{Comments, Method, Service};
 use crate::extern_paths::ExternPaths;
 use crate::ident::{to_snake, to_upper_camel};
 use crate::message_graph::MessageGraph;
-use crate::{BytesType, Config, MapType};
+use crate::{BytesType, Config, MapType, StringType};
 
 #[derive(PartialEq)]
 enum Syntax {
@@ -348,6 +348,17 @@ impl<'a> CodeGenerator<'a> {
                 .unwrap_or_default();
             self.buf
                 .push_str(&format!("={:?}", bytes_type.annotation()));
+        }
+
+        if type_ == Type::String {
+            let string_type = self
+                .config
+                .string_type
+                .get_first_field(fq_message_name, field.name())
+                .copied()
+                .unwrap_or_default();
+            self.buf
+                .push_str(&format!("={:?}", string_type.annotation()));
         }
 
         match field.label() {
@@ -862,8 +873,6 @@ impl<'a> CodeGenerator<'a> {
     }
 
     fn resolve_type(&self, field: &FieldDescriptorProto, fq_message_name: &str) -> String {
-        let prost_path = self.config.prost_path.as_deref().unwrap_or("::prost");
-
         match field.r#type() {
             Type::Float => String::from("f32"),
             Type::Double => String::from("f64"),
@@ -872,7 +881,14 @@ impl<'a> CodeGenerator<'a> {
             Type::Int32 | Type::Sfixed32 | Type::Sint32 | Type::Enum => String::from("i32"),
             Type::Int64 | Type::Sfixed64 | Type::Sint64 => String::from("i64"),
             Type::Bool => String::from("bool"),
-            Type::String => format!("{}::alloc::string::String", prost_path),
+            Type::String => self
+                .config
+                .string_type
+                .get_first_field(fq_message_name, field.name())
+                .copied()
+                .unwrap_or_default()
+                .rust_type()
+                .to_owned(),
             Type::Bytes => self
                 .config
                 .bytes_type
@@ -1208,6 +1224,26 @@ impl BytesType {
         match self {
             BytesType::Vec => "::prost::alloc::vec::Vec<u8>",
             BytesType::Bytes => "::prost::bytes::Bytes",
+        }
+    }
+}
+
+impl StringType {
+    /// The `prost-derive` annotation type corresponding to the bytes type.
+    fn annotation(&self) -> &'static str {
+        match self {
+            StringType::String => "string",
+            StringType::ByteStr => "byte_str",
+            StringType::ByteStrUnchecked => "byte_str_unchecked",
+        }
+    }
+
+    /// The fully-qualified Rust type corresponding to the bytes type.
+    fn rust_type(&self) -> &'static str {
+        match self {
+            StringType::String => "::prost::alloc::string::String",
+            StringType::ByteStr => "::prost::str::ByteStr",
+            StringType::ByteStrUnchecked => "::prost::str::ByteStrUnchecked",
         }
     }
 }

@@ -8,6 +8,7 @@ pub extern crate alloc;
 
 // Re-export the bytes crate for use within derived code.
 pub use bytes;
+pub use types::str;
 
 mod error;
 mod message;

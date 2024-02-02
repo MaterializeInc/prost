@@ -235,6 +235,14 @@ impl Default for BytesType {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+enum StringType {
+    #[default]
+    String,
+    ByteStr,
+    ByteStrUnchecked,
+}
+
 /// Configuration options for Protobuf code generation.
 ///
 /// This configuration builder can be used to set non-default code generation options.
@@ -243,6 +251,7 @@ pub struct Config {
     service_generator: Option<Box<dyn ServiceGenerator>>,
     map_type: PathMap<MapType>,
     bytes_type: PathMap<BytesType>,
+    string_type: PathMap<StringType>,
     type_attributes: PathMap<String>,
     message_attributes: PathMap<String>,
     enum_attributes: PathMap<String>,
@@ -385,6 +394,30 @@ impl Config {
         for matcher in paths {
             self.bytes_type
                 .insert(matcher.as_ref().to_string(), BytesType::Bytes);
+        }
+        self
+    }
+
+    pub fn bytes_str<I, S>(&mut self, paths: I) -> &mut Self
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        for matcher in paths {
+            self.string_type
+                .insert(matcher.as_ref().to_string(), StringType::ByteStr)
+        }
+        self
+    }
+
+    pub fn bytes_str_unchecked<I, S>(&mut self, paths: I) -> &mut Self
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        for matcher in paths {
+            self.string_type
+                .insert(matcher.as_ref().to_string(), StringType::ByteStrUnchecked)
         }
         self
     }
@@ -1232,6 +1265,7 @@ impl default::Default for Config {
             service_generator: None,
             map_type: PathMap::default(),
             bytes_type: PathMap::default(),
+            string_type: PathMap::default(),
             type_attributes: PathMap::default(),
             message_attributes: PathMap::default(),
             enum_attributes: PathMap::default(),
@@ -1259,6 +1293,7 @@ impl fmt::Debug for Config {
             .field("service_generator", &self.service_generator.is_some())
             .field("map_type", &self.map_type)
             .field("bytes_type", &self.bytes_type)
+            .field("string_type", &self.string_type)
             .field("type_attributes", &self.type_attributes)
             .field("field_attributes", &self.field_attributes)
             .field("prost_types", &self.prost_types)

@@ -1,5 +1,6 @@
 //! Protobuf encoding and decoding errors.
 
+use alloc::string::ToString;
 use alloc::borrow::Cow;
 use alloc::boxed::Box;
 use alloc::collections::TryReserveError;
