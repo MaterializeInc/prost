@@ -562,12 +562,35 @@ impl<'a> CodeGenerator<'a> {
             self.path.pop();
 
             self.push_indent();
-            let ty_tag = self.field_type_tag(&field);
-            self.buf.push_str(&format!(
-                "#[prost({}, tag=\"{}\")]\n",
-                ty_tag,
-                field.number()
-            ));
+            self.buf.push_str("#[prost(");
+            let type_tag = self.field_type_tag(&field);
+            self.buf.push_str(&type_tag);
+
+            if type_ == Type::Bytes {
+                let bytes_type = self
+                    .config
+                    .bytes_type
+                    .get_first_field(fq_message_name, field.name())
+                    .copied()
+                    .unwrap_or_default();
+                self.buf
+                    .push_str(&format!("={:?}", bytes_type.annotation()));
+            }
+
+            if type_ == Type::String {
+                let string_type = self
+                    .config
+                    .string_type
+                    .get_first_field(fq_message_name, field.name())
+                    .copied()
+                    .unwrap_or_default();
+                self.buf
+                    .push_str(&format!("={:?}", string_type.annotation()));
+            }
+
+            self.buf
+                .push_str(&format!(", tag=\"{}\")]\n", field.number()));
+
             self.append_field_attributes(&oneof_name, field.name());
 
             self.push_indent();

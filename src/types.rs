@@ -424,7 +424,7 @@ impl Message for () {
 }
 
 pub mod str {
-    use alloc::string::String;
+    use alloc::string::{String, ToString};
     use core::fmt;
     use core::hash::Hash;
     use core::marker::PhantomData;
@@ -527,7 +527,7 @@ pub mod str {
 
     impl<'a, T> From<&'a str> for ByteStr<T> {
         fn from(value: &'a str) -> Self {
-            Self::from(value.to_owned())
+            Self::from(value.to_string())
         }
     }
 
