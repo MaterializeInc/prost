@@ -106,6 +106,7 @@ fn main() {
 
     config
         .bytes(["."])
+        .bytes_str(["."])
         .compile_protos(&[src.join("well_known_types.proto")], includes)
         .unwrap();
 
@@ -116,6 +117,7 @@ fn main() {
 
     prost_build::Config::new()
         .bytes(["."])
+        .bytes_str(["."])
         .out_dir(out_path)
         .include_file("wellknown_include.rs")
         .compile_protos(&[src.join("well_known_types.proto")], includes)

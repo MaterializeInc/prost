@@ -1065,6 +1065,142 @@ pub mod bytes {
     }
 }
 
+pub mod byte_str {
+    use crate::str::ByteStr;
+
+    use super::*;
+
+    pub fn encode<B>(tag: u32, value: &ByteStr, buf: &mut B)
+    where
+        B: BufMut,
+    {
+        encode_key(tag, WireType::LengthDelimited, buf);
+        encode_varint(value.len() as u64, buf);
+        buf.put_slice(value.as_bytes());
+    }
+
+    pub fn merge<B>(
+        wire_type: WireType,
+        value: &mut ByteStr,
+        buf: &mut B,
+        ctx: DecodeContext,
+    ) -> Result<(), DecodeError>
+    where
+        B: Buf,
+    {
+        // DropGuard makes sure that we never leak a `ByteStr` that contains invalid UTF-8
+        // data. See the comment in `encoding::string::merge` for more detail.
+
+        struct DropGuard<'a>(&'a mut Bytes);
+        impl<'a> Drop for DropGuard<'a> {
+            #[inline]
+            fn drop(&mut self) {
+                self.0.clear();
+            }
+        }
+
+        let guard = DropGuard(&mut value.buf);
+        super::bytes::merge(wire_type, guard.0, buf, ctx)?;
+        match core::str::from_utf8(&guard.0[..]) {
+            Ok(_) => {
+                mem::forget(guard);
+                Ok(())
+            }
+            Err(_) => Err(DecodeError::new(
+                "invalid ByteStr: data is not UTF-8 encoded",
+            )),
+        }
+    }
+
+    length_delimited!(ByteStr);
+
+    #[cfg(test)]
+    mod test {
+        use proptest::prelude::*;
+
+        use super::super::test::{check_collection_type, check_type};
+        use super::*;
+
+        proptest! {
+            #[test]
+            fn check_byte_str(value: String, tag in MIN_TAG..=MAX_TAG) {
+                let value = ByteStr::from(value);
+                super::test::check_type::<ByteStr, ByteStr>(value, tag, WireType::LengthDelimited,
+                                                            encode, merge, encoded_len)?;
+            }
+
+            #[test]
+            fn check_repeated_byte_str(value: Vec<String>, tag in MIN_TAG..=MAX_TAG) {
+                let value = value.into_iter().map(ByteStr::from).collect();
+                super::test::check_collection_type(value, tag, WireType::LengthDelimited,
+                                                   encode_repeated, merge_repeated,
+                                                   encoded_len_repeated)?;
+            }
+        }
+    }
+}
+
+pub mod byte_str_unchecked {
+    use crate::str::ByteStrUnchecked;
+
+    use super::*;
+
+    pub fn encode<B>(tag: u32, value: &ByteStrUnchecked, buf: &mut B)
+    where
+        B: BufMut,
+    {
+        encode_key(tag, WireType::LengthDelimited, buf);
+        encode_varint(value.len() as u64, buf);
+        buf.put_slice(value.as_bytes());
+    }
+
+    pub fn merge<B>(
+        wire_type: WireType,
+        value: &mut ByteStrUnchecked,
+        buf: &mut B,
+        ctx: DecodeContext,
+    ) -> Result<(), DecodeError>
+    where
+        B: Buf,
+    {
+        // We're the Unchecked variant, so no need to valid it's UTF-8.
+        super::bytes::merge(wire_type, &mut value.buf, buf, ctx)
+    }
+
+    length_delimited!(ByteStrUnchecked);
+
+    #[cfg(test)]
+    mod test {
+        use proptest::prelude::*;
+
+        use super::super::test::{check_collection_type, check_type};
+        use super::*;
+
+        proptest! {
+            #[test]
+            fn check_byte_str(value: String, tag in MIN_TAG..=MAX_TAG) {
+                let value = ByteStrUnchecked::from(value);
+                super::test::check_type::<ByteStrUnchecked, ByteStrUnchecked>(
+                    value,
+                    tag,
+                    WireType::LengthDelimited,
+                    encode,
+                    merge,
+                    encoded_len
+                )?;
+            }
+
+            #[test]
+            fn check_repeated_byte_str(value: Vec<String>, tag in MIN_TAG..=MAX_TAG) {
+                let value = value.into_iter().map(ByteStrUnchecked::from).collect();
+                super::test::check_collection_type(value, tag, WireType::LengthDelimited,
+                                                   encode_repeated, merge_repeated,
+                                                   encoded_len_repeated)?;
+            }
+        }
+    }
+}
+
 pub mod message {
     use super::*;
 
