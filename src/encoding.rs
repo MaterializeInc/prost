@@ -1114,43 +1114,30 @@ pub mod byte_str {
 
     length_delimited!(ByteStr);
 
-    // #[cfg(test)]
-    // mod test {
-    //     use proptest::prelude::*;
+    #[cfg(test)]
+    mod test {
+        use proptest::prelude::*;
 
-    //     use super::super::test::{check_collection_type, check_type};
-    //     use super::*;
+        use super::super::test::{check_collection_type, check_type};
+        use super::*;
 
-    //     proptest! {
-    //         #[test]
-    //         fn check_vec(value: Vec<u8>, tag in MIN_TAG..=MAX_TAG) {
-    //             super::test::check_type::<Vec<u8>, Vec<u8>>(value, tag, WireType::LengthDelimited,
-    //                                                         encode, merge, encoded_len)?;
-    //         }
+        proptest! {
+            #[test]
+            fn check_byte_str(value: String, tag in MIN_TAG..=MAX_TAG) {
+                let value = ByteStr::from(value);
+                super::test::check_type::<ByteStr, ByteStr>(value, tag, WireType::LengthDelimited,
+                                                            encode, merge, encoded_len)?;
+            }
 
-    //         #[test]
-    //         fn check_bytes(value: Vec<u8>, tag in MIN_TAG..=MAX_TAG) {
-    //             let value = Bytes::from(value);
-    //             super::test::check_type::<Bytes, Bytes>(value, tag, WireType::LengthDelimited,
-    //                                                     encode, merge, encoded_len)?;
-    //         }
-
-    //         #[test]
-    //         fn check_repeated_vec(value: Vec<Vec<u8>>, tag in MIN_TAG..=MAX_TAG) {
-    //             super::test::check_collection_type(value, tag, WireType::LengthDelimited,
-    //                                                encode_repeated, merge_repeated,
-    //                                                encoded_len_repeated)?;
-    //         }
-
-    //         #[test]
-    //         fn check_repeated_bytes(value: Vec<Vec<u8>>, tag in MIN_TAG..=MAX_TAG) {
-    //             let value = value.into_iter().map(Bytes::from).collect();
-    //             super::test::check_collection_type(value, tag, WireType::LengthDelimited,
-    //                                                encode_repeated, merge_repeated,
-    //                                                encoded_len_repeated)?;
-    //         }
-    //     }
-    // }
+            #[test]
+            fn check_repeated_byte_str(value: Vec<String>, tag in MIN_TAG..=MAX_TAG) {
+                let value = value.into_iter().map(ByteStr::from).collect();
+                super::test::check_collection_type(value, tag, WireType::LengthDelimited,
+                                                   encode_repeated, merge_repeated,
+                                                   encoded_len_repeated)?;
+            }
+        }
+    }
 }
 
 pub mod byte_str_unchecked {
@@ -1182,43 +1169,36 @@ pub mod byte_str_unchecked {
 
     length_delimited!(ByteStrUnchecked);
 
-    // #[cfg(test)]
-    // mod test {
-    //     use proptest::prelude::*;
+    #[cfg(test)]
+    mod test {
+        use proptest::prelude::*;
 
-    //     use super::super::test::{check_collection_type, check_type};
-    //     use super::*;
+        use super::super::test::{check_collection_type, check_type};
+        use super::*;
 
-    //     proptest! {
-    //         #[test]
-    //         fn check_vec(value: Vec<u8>, tag in MIN_TAG..=MAX_TAG) {
-    //             super::test::check_type::<Vec<u8>, Vec<u8>>(value, tag, WireType::LengthDelimited,
-    //                                                         encode, merge, encoded_len)?;
-    //         }
+        proptest! {
+            #[test]
+            fn check_byte_str(value: String, tag in MIN_TAG..=MAX_TAG) {
+                let value = ByteStrUnchecked::from(value);
+                super::test::check_type::<ByteStrUnchecked, ByteStrUnchecked>(
+                    value,
+                    tag,
+                    WireType::LengthDelimited,
+                    encode,
+                    merge,
+                    encoded_len
+                )?;
+            }
 
-    //         #[test]
-    //         fn check_bytes(value: Vec<u8>, tag in MIN_TAG..=MAX_TAG) {
-    //             let value = Bytes::from(value);
-    //             super::test::check_type::<Bytes, Bytes>(value, tag, WireType::LengthDelimited,
-    //                                                     encode, merge, encoded_len)?;
-    //         }
-
-    //         #[test]
-    //         fn check_repeated_vec(value: Vec<Vec<u8>>, tag in MIN_TAG..=MAX_TAG) {
-    //             super::test::check_collection_type(value, tag, WireType::LengthDelimited,
-    //                                                encode_repeated, merge_repeated,
-    //                                                encoded_len_repeated)?;
-    //         }
-
-    //         #[test]
-    //         fn check_repeated_bytes(value: Vec<Vec<u8>>, tag in MIN_TAG..=MAX_TAG) {
-    //             let value = value.into_iter().map(Bytes::from).collect();
-    //             super::test::check_collection_type(value, tag, WireType::LengthDelimited,
-    //                                                encode_repeated, merge_repeated,
-    //                                                encoded_len_repeated)?;
-    //         }
-    //     }
-    // }
+            #[test]
+            fn check_repeated_byte_str(value: Vec<String>, tag in MIN_TAG..=MAX_TAG) {
+                let value = value.into_iter().map(ByteStrUnchecked::from).collect();
+                super::test::check_collection_type(value, tag, WireType::LengthDelimited,
+                                                   encode_repeated, merge_repeated,
+                                                   encoded_len_repeated)?;
+            }
+        }
+    }
 }
 
 pub mod message {
